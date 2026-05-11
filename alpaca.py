@@ -14,21 +14,31 @@ ACCENT = "#4a4a4a"
 INPUT_BG = "#3c3f41"
 SEND_BTN_BG = "#4e79a7"
 
+# --- PRESET IDENTITIES ---
+IDENTITIES = {
+    "Helpful Assistant": "You are a helpful AI assistant.",
+    "Adolf Hitler": "You are the german dictator Adolf Hitler.",
+    "Bindrmon": "You are a pokemon-store owner and are a little overweight. You can only think about pokemon cards and the rarity of them.",
+    "Bruce Willis": "You are Bruce Willis, the Hollywood actor. You are best friends with me and share all your Hollywood secrets whenever you can.",
+    "Dungeon Master": "You are a dungeonmaster, using the 5th edition Dungeons and Dragons ruleset. You are built for roleplay and can roll RPG dice.",
+    "Python Expert": "You are an expert Python developer. You provide concise, efficient, and well-documented code."
+}
+
 class OllamaGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Alpaca Ollama UI - System Prompt Edition")
+        self.root.title("Alpaca Ollama UI - Clean Theme")
         self.root.geometry("1000x900")
         self.root.configure(bg=THEME_BG)
 
-        # Dropdown popup list options (anthracite theme)
+        # Dropdown popup list options
         self.root.option_add('*TCombobox*Listbox.background', INPUT_BG)
         self.root.option_add('*TCombobox*Listbox.foreground', THEME_FG)
         self.root.option_add('*TCombobox*Listbox.selectBackground', SEND_BTN_BG)
-        self.root.option_add('*TCombobox*Listbox.font', "Ubuntu 11")
 
         self.available_models = []
         self.selected_model = tk.StringVar()
+        self.selected_identity = tk.StringVar()
         self.is_thinking = False 
         self.full_response_buffer = ""
 
@@ -44,14 +54,18 @@ class OllamaGUI:
         self.style = ttk.Style()
         self.style.theme_use('clam')
         
-        # --- Combobox Styling ---
+        # --- Combobox Styling (Consistent Grey) ---
         self.style.map("TCombobox", 
             fieldbackground=[("readonly", INPUT_BG)],
             background=[("readonly", ACCENT)],
             foreground=[("readonly", THEME_FG)],
             arrowcolor=[("readonly", THEME_FG)]
         )
-        self.style.configure("TCombobox", bordercolor=ACCENT, lightcolor=ACCENT, darkcolor=ACCENT)
+        self.style.configure("TCombobox", 
+                             bordercolor=ACCENT, 
+                             lightcolor=ACCENT, 
+                             darkcolor=ACCENT,
+                             selectbackground=INPUT_BG)
 
         # --- Scrollbar Styling ---
         self.style.configure("Vertical.TScrollbar", 
@@ -63,26 +77,26 @@ class OllamaGUI:
             background=[('pressed', SEND_BTN_BG), ('active', "#5a5a5a")])
 
     def setup_ui(self):
-        # --- Top bar ---
+        # --- Top bar (Model Selection) ---
         top_frame = tk.Frame(self.root, bg=THEME_BG, pady=10)
         top_frame.pack(fill="x", padx=10)
         
         tk.Label(top_frame, text="Active Model:", bg=THEME_BG, fg=THEME_FG, font=self.normal_font).pack(side="left", padx=5)
-        self.model_dropdown = ttk.Combobox(top_frame, textvariable=self.selected_model, state="readonly", width=30)
+        self.model_dropdown = ttk.Combobox(top_frame, textvariable=self.selected_model, state="readonly", width=25)
         self.model_dropdown.pack(side="left", padx=5)
         
         tk.Button(top_frame, text="Refresh List", command=self.refresh_models, 
                   bg=ACCENT, fg="white", relief="flat", padx=10, cursor="hand2").pack(side="left", padx=5)
 
-        # --- System Instructions Area (New) ---
-        system_frame = tk.LabelFrame(self.root, text=" System Instructions / Identity ", bg=THEME_BG, fg="#81a2be", 
-                                     font=self.small_font, padx=10, pady=5, relief="flat", highlightbackground=ACCENT, highlightthickness=1)
-        system_frame.pack(fill="x", padx=15, pady=5)
-
-        self.system_input = tk.Text(system_frame, height=3, bg=INPUT_BG, fg=THEME_FG, 
-                                    insertbackground="white", font=self.small_font, borderwidth=0, padx=5, pady=5)
-        self.system_input.pack(fill="x", expand=True)
-        self.system_input.insert("1.0", "You are a helpful AI assistant.") # Default instruction
+        # --- Identity bar (Now with THEME_FG and no blue outline) ---
+        id_frame = tk.Frame(self.root, bg=THEME_BG, pady=5)
+        id_frame.pack(fill="x", padx=10)
+        
+        tk.Label(id_frame, text="System Identity:", bg=THEME_BG, fg=THEME_FG, font=self.normal_font).pack(side="left", padx=5)
+        self.identity_dropdown = ttk.Combobox(id_frame, textvariable=self.selected_identity, state="readonly", width=35)
+        self.identity_dropdown['values'] = list(IDENTITIES.keys())
+        self.identity_dropdown.current(0)
+        self.identity_dropdown.pack(side="left", padx=5)
 
         # --- Chat container ---
         chat_frame = tk.Frame(self.root, bg=THEME_BG)
@@ -101,7 +115,6 @@ class OllamaGUI:
         self.chat_display.pack(side="left", expand=True, fill="both")
         self.scrollbar.set(0.0, 1.0)
 
-        # Tags
         self.chat_display.tag_configure("user", foreground="#81a2be", font=(None, 11, "bold"))
         self.chat_display.tag_configure("thinking", foreground="#f0c674", font=(None, 11, "italic"))
         self.chat_display.tag_configure("code_block", background=CODE_BG, font=self.code_font)
@@ -134,7 +147,8 @@ class OllamaGUI:
         self.chat_display.config(state=tk.NORMAL)
         self.chat_display.delete("limit", tk.END)
         dots = "." * (count % 4) or "."
-        self.chat_display.insert(tk.END, f"\nOllama is thinking{dots}", "thinking")
+        identity_name = self.selected_identity.get()
+        self.chat_display.insert(tk.END, f"\n{identity_name} is thinking{dots}", "thinking")
         self.chat_display.see(tk.END)
         self.chat_display.config(state=tk.DISABLED)
         self.root.after(400, lambda: self.animate_thinking(count + 1))
@@ -148,10 +162,10 @@ class OllamaGUI:
     def start_query(self, event=None):
         query = self.input_field.get().strip()
         model = self.selected_model.get()
-        system_prompt = self.system_input.get("1.0", tk.END).strip()
+        identity_key = self.selected_identity.get()
+        system_prompt = IDENTITIES.get(identity_key, "You are a helpful assistant.")
         
         self.input_field.delete(0, tk.END)
-        
         if not query or not model or self.is_thinking or model == "Ollama offline": 
             return "break"
         
@@ -167,19 +181,12 @@ class OllamaGUI:
         self.full_response_buffer = ""
         self.animate_thinking()
         
-        # Pass the system prompt to the thread
-        threading.Thread(target=self.call_ollama_streaming, args=(query, model, system_prompt), daemon=True).start()
+        threading.Thread(target=self.call_ollama_streaming, args=(query, model, system_prompt, identity_key), daemon=True).start()
         return "break"
 
-    def call_ollama_streaming(self, prompt, model, system_prompt):
+    def call_ollama_streaming(self, prompt, model, system_prompt, identity_name):
         try:
-            # Added the 'system' field to the payload
-            payload = {
-                "model": model, 
-                "prompt": prompt, 
-                "system": system_prompt, 
-                "stream": True
-            }
+            payload = {"model": model, "prompt": prompt, "system": system_prompt, "stream": True}
             response = requests.post(f"{BASE_URL}/api/generate", json=payload, stream=True, timeout=180)
             
             first_token = True
@@ -191,7 +198,7 @@ class OllamaGUI:
                     
                     if first_token:
                         self.is_thinking = False 
-                        self.root.after(0, self.prepare_response_area)
+                        self.root.after(0, lambda: self.prepare_response_area(identity_name))
                         first_token = False
                     
                     self.root.after(0, lambda t=token: self.update_stream_ui(t))
@@ -204,10 +211,10 @@ class OllamaGUI:
             self.root.after(0, lambda: self.set_input_state(tk.NORMAL))
             self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
 
-    def prepare_response_area(self):
+    def prepare_response_area(self, identity_name):
         self.chat_display.config(state=tk.NORMAL)
         self.chat_display.delete("limit", tk.END)
-        self.chat_display.insert(tk.END, f"\n\nOLLAMA:\n", "user")
+        self.chat_display.insert(tk.END, f"\n\n{identity_name.upper()}:\n", "user")
         self.chat_display.insert(tk.END, "\n")
         self.chat_display.mark_set("stream_start", "end-1c")
         self.chat_display.mark_gravity("stream_start", tk.LEFT)
