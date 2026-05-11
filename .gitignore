@@ -125,4 +125,8 @@ alpaca.dist/PyQt5/QtWidgets.so
 
 alpaca.dist/PyQt5/sip.so
 
+<<<<<<< Updated upstream
 *.zip
+=======
+alpaca.1.0.zip
+>>>>>>> Stashed changes
