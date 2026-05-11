@@ -163,7 +163,7 @@ class OllamaGUI:
         
         self.set_input_state(tk.DISABLED)
         self.chat_display.config(state=tk.NORMAL)
-        self.chat_display.insert(tk.END, f"\nYOU:\n", "user")
+        self.chat_display.insert(tk.END, "\nYOU:\n", "user")
         self.chat_display.insert(tk.END, f"{query}\n")
         self.chat_display.mark_set("limit", "end-1c")
         self.chat_display.mark_gravity("limit", tk.LEFT)
