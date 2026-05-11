@@ -17,8 +17,8 @@ SEND_BTN_BG = "#4e79a7"
 class OllamaGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Alpaca - A pleasant Ollama companion")
-        self.root.geometry("1000x850")
+        self.root.title("Alpaca Ollama UI - System Prompt Edition")
+        self.root.geometry("1000x900")
         self.root.configure(bg=THEME_BG)
 
         # Dropdown popup list options (anthracite theme)
@@ -33,6 +33,7 @@ class OllamaGUI:
         self.full_response_buffer = ""
 
         self.normal_font = font.Font(family="Ubuntu", size=11)
+        self.small_font = font.Font(family="Ubuntu", size=10)
         self.code_font = font.Font(family="Ubuntu Mono", size=11)
 
         self.setup_styles()
@@ -43,45 +44,47 @@ class OllamaGUI:
         self.style = ttk.Style()
         self.style.theme_use('clam')
         
-        # --- Combobox Styling (Fix for white background in readonly state) ---
+        # --- Combobox Styling ---
         self.style.map("TCombobox", 
             fieldbackground=[("readonly", INPUT_BG)],
             background=[("readonly", ACCENT)],
             foreground=[("readonly", THEME_FG)],
             arrowcolor=[("readonly", THEME_FG)]
         )
-        self.style.configure("TCombobox", 
-                             bordercolor=ACCENT, 
-                             lightcolor=ACCENT, 
-                             darkcolor=ACCENT)
+        self.style.configure("TCombobox", bordercolor=ACCENT, lightcolor=ACCENT, darkcolor=ACCENT)
 
-        # --- Scrollbar Styling (Anthracite) ---
+        # --- Scrollbar Styling ---
         self.style.configure("Vertical.TScrollbar", 
-                             gripcount=0,
-                             background=ACCENT, 
-                             darkcolor=THEME_BG, 
-                             lightcolor=ACCENT,
-                             troughcolor=THEME_BG, 
-                             bordercolor=THEME_BG, 
-                             arrowcolor=THEME_FG)
+                             gripcount=0, background=ACCENT, darkcolor=THEME_BG, 
+                             lightcolor=ACCENT, troughcolor=THEME_BG, 
+                             bordercolor=THEME_BG, arrowcolor=THEME_FG)
         
-        # Prevent white borders around scrollbar buttons
         self.style.map("Vertical.TScrollbar",
             background=[('pressed', SEND_BTN_BG), ('active', "#5a5a5a")])
 
     def setup_ui(self):
-        # Top bar
+        # --- Top bar ---
         top_frame = tk.Frame(self.root, bg=THEME_BG, pady=10)
         top_frame.pack(fill="x", padx=10)
-        tk.Label(top_frame, text="Active Model:", bg=THEME_BG, fg=THEME_FG, font=self.normal_font).pack(side="left", padx=5)
         
+        tk.Label(top_frame, text="Active Model:", bg=THEME_BG, fg=THEME_FG, font=self.normal_font).pack(side="left", padx=5)
         self.model_dropdown = ttk.Combobox(top_frame, textvariable=self.selected_model, state="readonly", width=30)
         self.model_dropdown.pack(side="left", padx=5)
         
         tk.Button(top_frame, text="Refresh List", command=self.refresh_models, 
                   bg=ACCENT, fg="white", relief="flat", padx=10, cursor="hand2").pack(side="left", padx=5)
 
-        # Chat container with styled scrollbar
+        # --- System Instructions Area (New) ---
+        system_frame = tk.LabelFrame(self.root, text=" System Instructions / Identity ", bg=THEME_BG, fg="#81a2be", 
+                                     font=self.small_font, padx=10, pady=5, relief="flat", highlightbackground=ACCENT, highlightthickness=1)
+        system_frame.pack(fill="x", padx=15, pady=5)
+
+        self.system_input = tk.Text(system_frame, height=3, bg=INPUT_BG, fg=THEME_FG, 
+                                    insertbackground="white", font=self.small_font, borderwidth=0, padx=5, pady=5)
+        self.system_input.pack(fill="x", expand=True)
+        self.system_input.insert("1.0", "You are a helpful AI assistant.") # Default instruction
+
+        # --- Chat container ---
         chat_frame = tk.Frame(self.root, bg=THEME_BG)
         chat_frame.pack(expand=True, fill="both", padx=10, pady=5)
 
@@ -96,18 +99,17 @@ class OllamaGUI:
         
         self.scrollbar.pack(side="right", fill="y")
         self.chat_display.pack(side="left", expand=True, fill="both")
-        
-        # Force the theme on the scrollbar immediately
         self.scrollbar.set(0.0, 1.0)
 
-        # Text tags for highlighting
+        # Tags
         self.chat_display.tag_configure("user", foreground="#81a2be", font=(None, 11, "bold"))
         self.chat_display.tag_configure("thinking", foreground="#f0c674", font=(None, 11, "italic"))
         self.chat_display.tag_configure("code_block", background=CODE_BG, font=self.code_font)
 
-        # Input area
+        # --- Input area ---
         input_frame = tk.Frame(self.root, bg=THEME_BG, pady=10)
         input_frame.pack(fill="x", padx=10, pady=10)
+        
         self.input_field = tk.Entry(input_frame, bg=INPUT_BG, fg="white", insertbackground="white", font=self.normal_font, borderwidth=0)
         self.input_field.pack(side="left", expand=True, fill="x", ipady=12, padx=(0, 10))
         self.input_field.bind("<Return>", self.start_query)
@@ -117,7 +119,6 @@ class OllamaGUI:
         self.send_btn.pack(side="right")
 
     def refresh_models(self):
-        """Fetches available models from the local Ollama instance."""
         try:
             response = requests.get(f"{BASE_URL}/api/tags", timeout=5)
             if response.status_code == 200:
@@ -129,7 +130,6 @@ class OllamaGUI:
             self.selected_model.set("Ollama offline")
 
     def animate_thinking(self, count=1):
-        """Simple animation to show the AI is processing the request."""
         if not self.is_thinking: return
         self.chat_display.config(state=tk.NORMAL)
         self.chat_display.delete("limit", tk.END)
@@ -140,18 +140,16 @@ class OllamaGUI:
         self.root.after(400, lambda: self.animate_thinking(count + 1))
 
     def set_input_state(self, state):
-        """Enables or disables input fields during processing."""
         self.input_field.config(state=state)
         self.send_btn.config(state=state)
         if state == tk.NORMAL:
             self.input_field.focus_set()
 
     def start_query(self, event=None):
-        """Initializes the query process and clears the input field immediately."""
         query = self.input_field.get().strip()
         model = self.selected_model.get()
+        system_prompt = self.system_input.get("1.0", tk.END).strip()
         
-        # Clear field immediately after sending
         self.input_field.delete(0, tk.END)
         
         if not query or not model or self.is_thinking or model == "Ollama offline": 
@@ -159,10 +157,8 @@ class OllamaGUI:
         
         self.set_input_state(tk.DISABLED)
         self.chat_display.config(state=tk.NORMAL)
-        self.chat_display.insert(tk.END, "\nYOU:\n", "user")
+        self.chat_display.insert(tk.END, f"\nYOU:\n", "user")
         self.chat_display.insert(tk.END, f"{query}\n")
-        
-        # Set a marker to know where to delete the thinking animation later
         self.chat_display.mark_set("limit", "end-1c")
         self.chat_display.mark_gravity("limit", tk.LEFT)
         self.chat_display.config(state=tk.DISABLED)
@@ -171,14 +167,19 @@ class OllamaGUI:
         self.full_response_buffer = ""
         self.animate_thinking()
         
-        # Start the request in a separate thread to keep the UI responsive
-        threading.Thread(target=self.call_ollama_streaming, args=(query, model), daemon=True).start()
+        # Pass the system prompt to the thread
+        threading.Thread(target=self.call_ollama_streaming, args=(query, model, system_prompt), daemon=True).start()
         return "break"
 
-    def call_ollama_streaming(self, prompt, model):
-        """Handles the streaming communication with the Ollama API."""
+    def call_ollama_streaming(self, prompt, model, system_prompt):
         try:
-            payload = {"model": model, "prompt": prompt, "stream": True}
+            # Added the 'system' field to the payload
+            payload = {
+                "model": model, 
+                "prompt": prompt, 
+                "system": system_prompt, 
+                "stream": True
+            }
             response = requests.post(f"{BASE_URL}/api/generate", json=payload, stream=True, timeout=180)
             
             first_token = True
@@ -204,10 +205,8 @@ class OllamaGUI:
             self.root.after(0, lambda: messagebox.showerror("Error", str(e)))
 
     def prepare_response_area(self):
-        """Removes the thinking message and prepares the header for the AI response."""
         self.chat_display.config(state=tk.NORMAL)
         self.chat_display.delete("limit", tk.END)
-        # Extra spacing above the OLLAMA header for readability
         self.chat_display.insert(tk.END, f"\n\nOLLAMA:\n", "user")
         self.chat_display.insert(tk.END, "\n")
         self.chat_display.mark_set("stream_start", "end-1c")
@@ -215,16 +214,13 @@ class OllamaGUI:
         self.chat_display.config(state=tk.DISABLED)
 
     def update_stream_ui(self, token):
-        """Appends incoming tokens to the chat display."""
         self.chat_display.config(state=tk.NORMAL)
         self.chat_display.insert(tk.END, token)
         self.chat_display.see(tk.END)
         self.chat_display.config(state=tk.DISABLED)
 
     def finalize_response(self):
-        """Finalizes the output by applying formatting to the full buffer."""
         self.chat_display.config(state=tk.NORMAL)
-        # Remove the raw stream to replace it with parsed/formatted content
         self.chat_display.delete("stream_start", tk.END)
         self.parse_and_highlight(self.full_response_buffer)
         self.chat_display.insert(tk.END, "\n" + "-"*60 + "\n")
@@ -233,21 +229,16 @@ class OllamaGUI:
         self.set_input_state(tk.NORMAL)
 
     def parse_and_highlight(self, text):
-        """Parses markdown code blocks and adds copy buttons."""
         parts = text.split("```")
         for i, part in enumerate(parts):
-            if i % 2 == 1: # This is a code block
+            if i % 2 == 1:
                 lines = part.split('\n')
-                # Try to skip the language identifier if present
                 code_content = '\n'.join(lines[1:]).strip() if len(lines) > 1 else lines[0].strip()
-                
                 self.chat_display.insert(tk.END, f"\n{code_content}\n", "code_block")
-                
                 btn = tk.Button(self.chat_display, text="📋 Copy Code", 
                                 command=lambda c=code_content: pyperclip.copy(c),
                                 bg="#444", fg="#81a2be", font=("Arial", 8, "bold"), 
                                 relief="flat", padx=5, pady=2, cursor="hand2")
-                
                 self.chat_display.window_create(tk.END, window=btn)
                 self.chat_display.insert(tk.END, "\n")
             else:
