@@ -130,3 +130,13 @@ alpaca.dist/PyQt5/sip.so
 =======
 alpaca.1.0.zip
 >>>>>>> Stashed changes
+
+alpaca
+
+alpaca-1.0.1-ubuntu-x86_64.tar.gz
+
+alpaca.bin
+
+compile.sh
+
+*.bin

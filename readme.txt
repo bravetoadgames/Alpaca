@@ -1,17 +1,31 @@
 +-------------------------------------------------------+
-| Alpaca 1.0                                            |
+| Alpaca 1.0.1                                          |
 | An Ollama identity crisis                             |
 +-------------------------------------------------------+
 | Written by Google Gemini, prompts by Arjen Schumacher |
-| May 11, 2026                                          |
 +-------------------------------------------------------+
 
 Welcome to Alpaca, your lightweight Ollama companion. Create any identity you want
 and start a conversation with it!
 
-+------------------+
-|- How to install -|
-+------------------+
++--------------------------------------+
+|- What's new - May 12, 2026          -|
++--------------------------------------+
+Features:
+- Dark-theme applied to input elements
+- Better alignment of input elements
+- AI responses are streamed to the output window
+- All input elements are ghosted during AI response
+- When models are refreshed, the identities are read from the JSON file as well, no more restarts needed
+
+Bugfixes:
+- AI output no longer shown twice in output window
+- Notification is shown when identities.json file has invalid format
+
+
++--------------------------------------+
+|- How to install                     -|
++--------------------------------------+
 Just place these files in its own directory. It should be these files:
 
 - alpaca.bin
@@ -19,16 +33,16 @@ Just place these files in its own directory. It should be these files:
 - readme.txt (this file)
 
 
-+--------------+
-|- How to run -|
-+--------------+
++--------------------------------------+
+|- How to run                         -|
++--------------------------------------+
 Be sure to have Ollama installed on your system. Also be sure you have pulled one or more models to your
 local harddisk. If Ollama is installed, simply start alpaca.bin and start chatting!
 
 
-+--------------------------------+
-|- How to create a new identity -|
-+--------------------------------+
++--------------------------------------+
+|- How to create a new identity       -|
++--------------------------------------+
 Open the file identities.json with a text-editor like Geany or Nano.
 
 Add a new line like this example:
