@@ -28,10 +28,11 @@ def load_identities():
         with open(JSON_FILE, "r") as f:
             return json.load(f)
     except Exception as e:
-        print(f"Error loading JSON: {e}")
+        # Toon een foutmelding in de UI als de JSON corrupt is
+        messagebox.showerror("JSON Error", f"Fout bij laden van {JSON_FILE}:\n{str(e)}")
         return default_id
 
-# Laad de identiteiten extern in plaats van hardcoded
+# Initiële lading van identiteiten
 IDENTITIES = load_identities()
 
 class OllamaGUI:
@@ -119,13 +120,30 @@ class OllamaGUI:
         self.chat_display.config(state=tk.DISABLED)
 
     def refresh_models(self):
+        """Ververst zowel de Ollama modellen als de externe identiteiten."""
+        # --- Deel 1: Herlaad Identiteiten ---
+        global IDENTITIES
+        IDENTITIES = load_identities()
+        current_selection = self.selected_identity.get()
+        self.identity_dropdown['values'] = list(IDENTITIES.keys())
+        
+        # Behoud selectie als deze nog bestaat, anders pak de eerste
+        if current_selection in IDENTITIES:
+            self.selected_identity.set(current_selection)
+        elif IDENTITIES:
+            self.identity_dropdown.current(0)
+
+        # --- Deel 2: Herlaad Ollama Modellen ---
         try:
             response = requests.get(f"{BASE_URL}/api/tags", timeout=5)
             if response.status_code == 200:
                 models_data = response.json().get("models", [])
                 self.available_models = [m["name"] for m in models_data]
                 self.model_dropdown['values'] = self.available_models
-                if self.available_models: self.model_dropdown.current(0)
+                if self.available_models:
+                    # Alleen resetten als huidige selectie niet meer bestaat
+                    if self.selected_model.get() not in self.available_models:
+                        self.model_dropdown.current(0)
         except: 
             self.selected_model.set("Ollama offline")
 
