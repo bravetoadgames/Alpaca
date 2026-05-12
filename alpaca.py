@@ -29,7 +29,7 @@ IDENTITIES = load_identities()
 class OllamaGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Alpaca 1.2.8 - Model Sizes")
+        self.root.title("Alpaca 1.2.8")
         self.root.geometry("1100x900")
         self.root.configure(bg=THEME_BG)
 
