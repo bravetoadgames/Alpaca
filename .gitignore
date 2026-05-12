@@ -140,3 +140,5 @@ alpaca.bin
 compile.sh
 
 *.bin
+
+alpaca.spec

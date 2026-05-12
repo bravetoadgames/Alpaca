@@ -1,5 +1,7 @@
-python3 -m nuitka --follow-imports --onefile alpaca.py
+rm -r dist
+pyinstaller --onefile alpaca.py
+staticx dist/alpaca dist/alpaca_static
 rm alpaca
-mv alpaca.bin alpaca
+mv dist/alpaca_static ./alpaca
 tar -czf alpaca-1.0.1-ubuntu-x86_64.tar.gz alpaca readme.txt identities.json
 
