@@ -1,5 +1,5 @@
 +-------------------------------------------------------+
-| Alpaca 1.0.1                                          |
+| Alpaca 1.2.8                                          |
 | An Ollama identity crisis                             |
 +-------------------------------------------------------+
 | Written by Google Gemini, prompts by Arjen Schumacher |
@@ -17,6 +17,7 @@ Features:
 - AI responses are streamed to the output window
 - All input elements are ghosted during AI response
 - When models are refreshed, the identities are read from the JSON file as well, no more restarts needed
+- Filesize of each model is shown in pulldown-menu
 
 Bugfixes:
 - AI output no longer shown twice in output window
