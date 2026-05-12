@@ -35,7 +35,7 @@ IDENTITIES = load_identities()
 class OllamaGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Alpaca - UI Optimized & Memory Edition")
+        self.root.title("Alpaca 1.0.1")
         self.root.geometry("1100x900")
         self.root.configure(bg=THEME_BG)
 
