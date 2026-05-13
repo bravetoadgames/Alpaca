@@ -17,11 +17,14 @@ DISABLED_FG = "#888888"
 JSON_FILE = "identities.json"
 
 def load_identities():
+    """Laadt de identiteiten in vanuit een JSON bestand."""
     default_id = {"Helpful Assistant": "You are a helpful AI assistant."}
     if os.path.exists(JSON_FILE):
         try:
-            with open(JSON_FILE, "r") as f: return json.load(f)
-        except: return default_id
+            with open(JSON_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return default_id
     return default_id
 
 IDENTITIES = load_identities()
@@ -29,7 +32,7 @@ IDENTITIES = load_identities()
 class OllamaGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Alpaca 1.2.8")
+        self.root.title("Alpaca 1.2.8 - Commit Ready")
         self.root.geometry("1100x900")
         self.root.configure(bg=THEME_BG)
 
@@ -43,18 +46,30 @@ class OllamaGUI:
         self.setup_menu()
         self.setup_ui()
         
+        # UI update triggers
         self.selected_model.trace_add("write", self.update_status_bar)
         self.selected_identity.trace_add("write", self.update_status_bar)
         
         self.refresh_models()
         self.update_status_bar()
+        
+        # FOCUS: Directe focus op het invoerveld
         self.input_field.focus_set()
 
     def setup_styles(self):
         style = ttk.Style()
         style.theme_use('clam')
-        style.configure("Vertical.TScrollbar", gripcount=0, background=ACCENT, troughcolor=THEME_BG, bordercolor=THEME_BG, darkcolor=THEME_BG, lightcolor=ACCENT, arrowcolor=THEME_FG)
-        style.map("Vertical.TScrollbar", background=[('active', '#4e5052'), ('pressed', SEND_BTN_BG)], arrowcolor=[('active', 'white')])
+        style.configure("Vertical.TScrollbar", 
+                        gripcount=0, 
+                        background=ACCENT, 
+                        troughcolor=THEME_BG, 
+                        bordercolor=THEME_BG, 
+                        darkcolor=THEME_BG, 
+                        lightcolor=ACCENT, 
+                        arrowcolor=THEME_FG)
+        style.map("Vertical.TScrollbar", 
+                  background=[('active', '#4e5052'), ('pressed', SEND_BTN_BG)], 
+                  arrowcolor=[('active', 'white')])
 
     def setup_menu(self):
         self.menu_bar = tk.Menu(self.root, bg=THEME_BG, fg=THEME_FG)
@@ -89,7 +104,6 @@ class OllamaGUI:
 
     def update_status_bar(self, *args):
         m = self.selected_model.get() or "None"
-        # In de statusbar tonen we alleen de modelnaam (zonder de grootte-prefix)
         display_name = m.split(" - ")[-1] if " - " in m else m
         i = self.selected_identity.get() or "None"
         self.status_label.config(text=f" 🤖 Model: {display_name}  |  🎭 Identity: {i}")
@@ -109,24 +123,14 @@ class OllamaGUI:
                 self.status_label.config(text=" ⚠️ No Models Found")
                 return
             
-            # Sorteren op grootte
             sorted_models = sorted(model_list, key=lambda x: x.get("size", 0))
             self.model_menu.delete(0, tk.END)
             
             for m in sorted_models:
                 raw_name = m["name"]
-                size_bytes = m.get("size", 0)
-                size_gb = size_bytes / (1024**3)
-                
-                # Formatteren: " 4.2 GB - Llama3"
-                # De padding aan de linkerkant helpt bij de uitlijning
+                size_gb = m.get("size", 0) / (1024**3)
                 label_text = f"{size_gb:>5.1f} GB - {raw_name}"
-                
-                self.model_menu.add_radiobutton(
-                    label=label_text, 
-                    variable=self.selected_model, 
-                    value=raw_name # We slaan alleen de echte naam op als waarde
-                )
+                self.model_menu.add_radiobutton(label=label_text, variable=self.selected_model, value=raw_name)
             
             if sorted_models:
                 self.selected_model.set(sorted_models[0]["name"])
